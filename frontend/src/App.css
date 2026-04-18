@@ -57,7 +57,7 @@
 }
 
 .cat-container {
-  cursor: pointer;
+  cursor: url('/comb.png') 32 32, auto;
   display: flex;
   flex-direction: column;
   align-items: center;

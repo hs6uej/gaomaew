@@ -143,10 +143,10 @@ function App() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
             >
-              <h2>พร้อมจะเกาแมวหรือยัง?</h2>
-              <p>ระวังนะ! ถ้าแมวหันหน้ามาต้องหยุดเกาทันที!</p>
+              <h2>พร้อมจะหวีขนแมวหรือยัง?</h2>
+              <p>ระวังนะ! ถ้าแมวหันหน้ามาต้องหยุดหวีทันที!</p>
               <button className="primary-btn" onClick={startGame}>
-                <Play size={20} /> เริ่มเกม
+                <Play size={20} /> เริ่มหวีเลย
               </button>
               <button className="secondary-btn" onClick={() => setShowLeaderboard(!showLeaderboard)}>
                 <Trophy size={20} /> อันดับสูงสุด
@@ -185,7 +185,7 @@ function App() {
                   </motion.div>
                 )}
               </motion.div>
-              <div className="hint">แตะที่แมวเพื่อเกา!</div>
+              <div className="hint">ใช้หวีแปรงขนแมวเลย!</div>
             </motion.div>
           )}
 
@@ -197,7 +197,7 @@ function App() {
               animate={{ y: 0, opacity: 1 }}
             >
               <h2>แมวโกรธแล้ว! 😾</h2>
-              <div className="final-score">คุณเกาไปได้ {score} ครั้ง</div>
+              <div className="final-score">คุณหวีขนไปได้ {score} ครั้ง</div>
               <div className="name-input">
                 <User size={20} />
                 <input 
