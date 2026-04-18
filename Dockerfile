@@ -1,26 +1,28 @@
-# Base image
-FROM node:18-slim
+# Stage 1: Build the frontend
+FROM node:18-slim AS frontend-build
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend/ ./
+RUN npm run build
 
-# Create app directory
+# Stage 2: Final production image
+FROM node:18-slim
 WORKDIR /app
 
-# Copy package.json and install production dependencies
+# Copy backend dependencies
 COPY package*.json ./
 RUN npm install --production
 
-# Copy backend source
+# Copy backend server and static data
 COPY server.js ./
 COPY data ./data
 
-# Copy built frontend
-COPY frontend/dist ./frontend/dist
+# Copy built frontend from Stage 1
+COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 
-# Expose port
+# Expose port and run
 EXPOSE 4455
-
-# Set environment variables
 ENV NODE_ENV=production
 ENV PORT=4455
-
-# Run the server
 CMD ["node", "server.js"]
