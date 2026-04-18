@@ -50,11 +50,18 @@ function App() {
   
   const lastPos = useRef({ x: 0, y: 0 });
   const totalDist = useRef(0);
+  const scoreRef = useRef(0);
+  const alertStartTime = useRef(0);
   
   const gameLoopRef = useRef(null);
   const audioMeow = useRef(new Audio(MEOW_SOUND));
   const audioHiss = useRef(new Audio(HISS_SOUND));
   const audioPurr = useRef(new Audio(PURR_SOUND));
+
+  // Sync scoreRef for async logic
+  useEffect(() => {
+    scoreRef.current = score;
+  }, [score]);
 
   // Fetch Highscores on load
   useEffect(() => {
@@ -75,18 +82,21 @@ function App() {
   useEffect(() => {
     if (gameState !== 'PLAYING' || isAlerted) return;
 
-    const minWait = Math.max(1000, 3000 - score * 50);
-    const maxWait = Math.max(2000, 6000 - score * 100);
+    // Use scoreRef to prevent timer reset on every point
+    const currentScore = scoreRef.current;
+    const minWait = Math.max(1000, 3000 - currentScore * 50);
+    const maxWait = Math.max(2000, 6000 - currentScore * 100);
     const waitTime = Math.random() * (maxWait - minWait) + minWait;
 
     const timer = setTimeout(() => {
       setIsAlerted(true);
+      alertStartTime.current = Date.now();
       audioHiss.current.currentTime = 0;
       audioHiss.current.play().catch(e => console.log("Audio blocked"));
     }, waitTime);
 
     return () => clearTimeout(timer);
-  }, [gameState, isAlerted, score]);
+  }, [gameState, isAlerted]); // Removed 'score' dependency
 
   useEffect(() => {
     if (!isAlerted || gameState !== 'PLAYING') return;
@@ -102,6 +112,7 @@ function App() {
   const startGame = () => {
     setGameState('PLAYING');
     setScore(0);
+    scoreRef.current = 0;
     setIsAlerted(false);
     setIsDragging(false);
     totalDist.current = 0;
@@ -111,7 +122,9 @@ function App() {
 
   const handlePointerDown = (e) => {
     if (gameState !== 'PLAYING') return;
-    if (isAlerted) {
+    
+    // Check grace period on initial click too
+    if (isAlerted && (Date.now() - alertStartTime.current > 150)) {
       endGame();
       return;
     }
@@ -143,7 +156,8 @@ function App() {
   const handlePointerMove = (e) => {
     if (!isDragging || gameState !== 'PLAYING') return;
 
-    if (isAlerted) {
+    // Grace Period: 150ms window to react
+    if (isAlerted && (Date.now() - alertStartTime.current > 150)) {
       endGame();
       return;
     }
