@@ -10,6 +10,33 @@ const MEOW_SOUND = "https://www.myinstants.com/media/sounds/cat-meow.mp3";
 const HISS_SOUND = "https://www.myinstants.com/media/sounds/hiss.mp3";
 const PURR_SOUND = "https://www.myinstants.com/media/sounds/purr.mp3";
 
+const HairParticle = ({ id, x, y, onComplete }) => {
+  return (
+    <motion.div
+      initial={{ x, y, opacity: 1, rotate: 0 }}
+      animate={{ 
+        y: y + 200 + Math.random() * 100,
+        x: x + (Math.random() - 0.5) * 100,
+        opacity: 0,
+        rotate: Math.random() * 360
+      }}
+      transition={{ duration: 1, ease: "easeOut" }}
+      onAnimationComplete={() => onComplete(id)}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '10px',
+        height: '2px',
+        background: '#f6ad55', // Ginger hair color
+        borderRadius: '5px',
+        pointerEvents: 'none',
+        zIndex: 50
+      }}
+    />
+  );
+};
+
 function App() {
   const [gameState, setGameState] = useState('IDLE'); // IDLE, PLAYING, GAME_OVER
   const [score, setScore] = useState(0);
@@ -19,6 +46,8 @@ function App() {
   const [playerName, setPlayerName] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [isScratched, setIsScratched] = useState(false);
+  const [particles, setParticles] = useState([]);
+  
   const lastPos = useRef({ x: 0, y: 0 });
   const totalDist = useRef(0);
   
@@ -48,6 +77,7 @@ function App() {
     setIsAlerted(false);
     setIsDragging(false);
     totalDist.current = 0;
+    setParticles([]);
     audioMeow.current.play().catch(e => console.log("Audio play blocked"));
     startCatLogic();
   };
@@ -85,12 +115,29 @@ function App() {
       endGame();
       return;
     }
+    e.target.setPointerCapture(e.pointerId);
     setIsDragging(true);
     lastPos.current = { x: e.clientX, y: e.clientY };
   };
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (e) => {
     setIsDragging(false);
+    if (e.target.hasPointerCapture(e.pointerId)) {
+      e.target.releasePointerCapture(e.pointerId);
+    }
+  };
+
+  const spawnParticles = (x, y) => {
+    const newParticles = Array.from({ length: 3 }).map(() => ({
+      id: Math.random(),
+      x: x + (Math.random() - 0.5) * 40,
+      y: y + (Math.random() - 0.5) * 40
+    }));
+    setParticles(prev => [...prev.slice(-20), ...newParticles]);
+  };
+
+  const removeParticle = (id) => {
+    setParticles(prev => prev.filter(p => p.id !== id));
   };
 
   const handlePointerMove = (e) => {
@@ -111,6 +158,7 @@ function App() {
     // Every 50 pixels moved = 1 point
     if (totalDist.current > 50) {
       setScore(prev => prev + 1);
+      spawnParticles(e.clientX, e.clientY);
       totalDist.current = 0;
       setIsScratched(true);
       setTimeout(() => setIsScratched(false), 50);
@@ -160,6 +208,10 @@ function App() {
           <span>Score: <b>{score}</b></span>
         </div>
       </header>
+
+      {particles.map(p => (
+        <HairParticle key={p.id} id={p.id} x={p.x} y={p.y} onComplete={removeParticle} />
+      ))}
 
       <main className="game-area">
         <AnimatePresence mode="wait">
