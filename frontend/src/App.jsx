@@ -71,6 +71,34 @@ function App() {
     }
   };
 
+  // Cat Behavior Logic (Automatic Loop)
+  useEffect(() => {
+    if (gameState !== 'PLAYING' || isAlerted) return;
+
+    const minWait = Math.max(1000, 3000 - score * 50);
+    const maxWait = Math.max(2000, 6000 - score * 100);
+    const waitTime = Math.random() * (maxWait - minWait) + minWait;
+
+    const timer = setTimeout(() => {
+      setIsAlerted(true);
+      audioHiss.current.currentTime = 0;
+      audioHiss.current.play().catch(e => console.log("Audio blocked"));
+    }, waitTime);
+
+    return () => clearTimeout(timer);
+  }, [gameState, isAlerted, score]);
+
+  useEffect(() => {
+    if (!isAlerted || gameState !== 'PLAYING') return;
+
+    const alertDuration = 800 + Math.random() * 1200;
+    const timer = setTimeout(() => {
+      setIsAlerted(false);
+    }, alertDuration);
+
+    return () => clearTimeout(timer);
+  }, [isAlerted, gameState]);
+
   const startGame = () => {
     setGameState('PLAYING');
     setScore(0);
@@ -79,34 +107,6 @@ function App() {
     totalDist.current = 0;
     setParticles([]);
     audioMeow.current.play().catch(e => console.log("Audio play blocked"));
-    startCatLogic();
-  };
-
-  const startCatLogic = () => {
-    if (gameLoopRef.current) clearTimeout(gameLoopRef.current);
-    
-    const minWait = Math.max(1000, 3000 - score * 50);
-    const maxWait = Math.max(2000, 6000 - score * 100);
-    const waitTime = Math.random() * (maxWait - minWait) + minWait;
-
-    gameLoopRef.current = setTimeout(() => {
-      turnCatHead();
-    }, waitTime);
-  };
-
-  const turnCatHead = () => {
-    setIsAlerted(true);
-    audioHiss.current.currentTime = 0;
-    audioHiss.current.play().catch(e => console.log("Audio blocked"));
-    
-    const alertDuration = 800 + Math.random() * 1200;
-    
-    setTimeout(() => {
-      if (gameState === 'PLAYING') {
-        setIsAlerted(false);
-        startCatLogic();
-      }
-    }, alertDuration);
   };
 
   const handlePointerDown = (e) => {
