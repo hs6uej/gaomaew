@@ -17,7 +17,10 @@ function App() {
   const [highscores, setHighscores] = useState([]);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [playerName, setPlayerName] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
   const [isScratched, setIsScratched] = useState(false);
+  const lastPos = useRef({ x: 0, y: 0 });
+  const totalDist = useRef(0);
   
   const gameLoopRef = useRef(null);
   const audioMeow = useRef(new Audio(MEOW_SOUND));
@@ -43,6 +46,8 @@ function App() {
     setGameState('PLAYING');
     setScore(0);
     setIsAlerted(false);
+    setIsDragging(false);
+    totalDist.current = 0;
     audioMeow.current.play().catch(e => console.log("Audio play blocked"));
     startCatLogic();
   };
@@ -50,7 +55,6 @@ function App() {
   const startCatLogic = () => {
     if (gameLoopRef.current) clearTimeout(gameLoopRef.current);
     
-    // Difficulty scaling: interval gets shorter as score increases
     const minWait = Math.max(1000, 3000 - score * 50);
     const maxWait = Math.max(2000, 6000 - score * 100);
     const waitTime = Math.random() * (maxWait - minWait) + minWait;
@@ -65,7 +69,6 @@ function App() {
     audioHiss.current.currentTime = 0;
     audioHiss.current.play().catch(e => console.log("Audio blocked"));
     
-    // Duration cat stays looking back
     const alertDuration = 800 + Math.random() * 1200;
     
     setTimeout(() => {
@@ -76,27 +79,52 @@ function App() {
     }, alertDuration);
   };
 
-  const handleScratch = () => {
+  const handlePointerDown = (e) => {
     if (gameState !== 'PLAYING') return;
+    if (isAlerted) {
+      endGame();
+      return;
+    }
+    setIsDragging(true);
+    lastPos.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handlePointerUp = () => {
+    setIsDragging(false);
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDragging || gameState !== 'PLAYING') return;
 
     if (isAlerted) {
       endGame();
       return;
     }
 
-    setScore(prev => prev + 1);
-    setIsScratched(true);
-    setTimeout(() => setIsScratched(false), 100);
+    const dx = e.clientX - lastPos.current.x;
+    const dy = e.clientY - lastPos.current.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
     
-    // Play purr sound occasionally or on every click? Let's do a light purr effect
-    if (score % 5 === 0) {
-      audioPurr.current.currentTime = 0;
-      audioPurr.current.play().catch(e => console.log("Audio blocked"));
+    totalDist.current += dist;
+    lastPos.current = { x: e.clientX, y: e.clientY };
+
+    // Every 50 pixels moved = 1 point
+    if (totalDist.current > 50) {
+      setScore(prev => prev + 1);
+      totalDist.current = 0;
+      setIsScratched(true);
+      setTimeout(() => setIsScratched(false), 50);
+      
+      if (score % 5 === 0) {
+        audioPurr.current.currentTime = 0;
+        audioPurr.current.play().catch(e => console.log("Audio blocked"));
+      }
     }
   };
 
   const endGame = () => {
     setGameState('GAME_OVER');
+    setIsDragging(false);
     if (gameLoopRef.current) clearTimeout(gameLoopRef.current);
     audioHiss.current.play().catch(e => console.log("Audio blocked"));
   };
@@ -158,7 +186,10 @@ function App() {
             <motion.div 
               className="cat-container"
               key="playing"
-              onPointerDown={handleScratch}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={handlePointerUp}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
