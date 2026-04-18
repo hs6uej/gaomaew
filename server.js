@@ -8,6 +8,12 @@ const app = express();
 const PORT = process.env.PORT || 4455;
 const HIGHSCORES_FILE = path.join(__dirname, 'data', 'highscores.json');
 
+console.log('--- Startup Config ---');
+console.log('Current Dir:', __dirname);
+console.log('Highscores Path:', HIGHSCORES_FILE);
+console.log('Frontend Path:', path.join(__dirname, 'frontend', 'dist'));
+console.log('----------------------');
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'frontend', 'dist')));
@@ -56,6 +62,18 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+// Global error handling for debugging
+process.on('uncaughtException', (err) => {
+    console.error('UNCAUGHT EXCEPTION:', err);
 });
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('UNHANDLED REJECTION:', reason);
+});
+
+try {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+} catch (err) {
+    console.error('FAILED TO START SERVER:', err);
+}
