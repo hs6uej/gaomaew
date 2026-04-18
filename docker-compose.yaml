@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  gaomaew-game:
+    build: .
+    ports:
+      - "4455:4455"
+    volumes:
+      - ./data:/app/data
+    restart: always
