@@ -7,7 +7,7 @@ const API_URL = ''; // Relative to origin
 
 // Sound effect URLs (Public domain/Direct links)
 const MEOW_SOUND = "https://www.myinstants.com/media/sounds/cat-meow.mp3";
-const HISS_SOUND = "https://www.myinstants.com/media/sounds/nononono-cat-mp3cut.mp3";
+const HISS_SOUND = "https://www.myinstants.com/media/sounds/angry4.mp3";
 const PURR_SOUND = "https://www.myinstants.com/media/sounds/cat-purr.mp3";
 
 const HairParticle = ({ id, x, y, onComplete }) => {
