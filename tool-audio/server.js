@@ -35,6 +35,43 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
+    // Serve pad.html
+    if (req.method === 'GET' && parsedUrl.pathname === '/pad') {
+        fs.readFile(path.join(__dirname, 'pad.html'), (err, data) => {
+            if (err) {
+                res.writeHead(500);
+                res.end('Error loading pad.html');
+                return;
+            }
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.end(data);
+        });
+        return;
+    }
+
+    // Get Pad API
+    if (req.method === 'GET' && parsedUrl.pathname === '/api/pad') {
+        const PAD_FILE = path.join(__dirname, 'pad.json');
+        fs.readFile(PAD_FILE, 'utf8', (err, data) => {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(data || '[]');
+        });
+        return;
+    }
+
+    // Update Pad API
+    if (req.method === 'POST' && parsedUrl.pathname === '/api/pad') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            const PAD_FILE = path.join(__dirname, 'pad.json');
+            fs.writeFileSync(PAD_FILE, body);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true }));
+        });
+        return;
+    }
+
     // Get History API
     if (req.method === 'GET' && parsedUrl.pathname === '/api/history') {
         fs.readFile(HISTORY_FILE, 'utf8', (err, data) => {
