@@ -142,6 +142,35 @@
             color: white;
         }
 
+        .exclusive-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--glass);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .exclusive-toggle.on {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .exclusive-toggle.on::before {
+            content: '●';
+            color: var(--accent);
+        }
+        
+        .exclusive-toggle.off::before {
+            content: '○';
+            color: var(--text-dim);
+        }
+
         /* Modal Styles */
         .modal-overlay {
             position: fixed;
@@ -200,6 +229,12 @@
                 <button id="modePlay" class="mode-btn active">PLAY</button>
                 <button id="modeEdit" class="mode-btn">EDIT</button>
             </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button id="btnStopAll" class="nav-btn" style="color: #f56565;">STOP ALL</button>
+                <div id="exclusiveToggle" class="exclusive-toggle on">
+                    Exclusive Mode
+                </div>
+            </div>
         </header>
 
         <div id="padGrid" class="pad-grid">
@@ -232,9 +267,11 @@
 
     <script>
         let currentMode = 'PLAY';
+        let isExclusiveMode = true;
         let padData = [];
         let historyData = [];
         let editingSlotId = null;
+        let activeAudios = new Map(); // id -> { audio, element }
 
         const padGrid = document.getElementById('padGrid');
         const modalOverlay = document.getElementById('modalOverlay');
@@ -245,6 +282,9 @@
             await Promise.all([loadPadData(), loadHistory()]);
             renderGrid();
             setupModeToggle();
+            setupExclusiveToggle();
+            
+            document.getElementById('btnStopAll').onclick = stopAllAudios;
         }
 
         async function loadPadData() {
@@ -296,6 +336,24 @@
             };
         }
 
+        function setupExclusiveToggle() {
+            const toggle = document.getElementById('exclusiveToggle');
+            toggle.onclick = () => {
+                isExclusiveMode = !isExclusiveMode;
+                toggle.classList.toggle('on', isExclusiveMode);
+                toggle.classList.toggle('off', !isExclusiveMode);
+                if (isExclusiveMode) stopAllAudios();
+            };
+        }
+
+        function stopAllAudios() {
+            activeAudios.forEach(({ audio, element }) => {
+                audio.pause();
+                element.classList.remove('playing');
+            });
+            activeAudios.clear();
+        }
+
         function handlePadClick(id, element) {
             const slot = padData.find(s => s.id === id);
             
@@ -309,12 +367,46 @@
         }
 
         function playSlot(slot, element) {
-            const audio = new Audio(slot.mp3);
-            audio.play().catch(e => alert('Cannot play audio. Link might be expired.'));
+            const slotId = slot.id;
             
-            element.classList.add('playing');
-            audio.onended = () => element.classList.remove('playing');
-            setTimeout(() => element.classList.remove('playing'), 500);
+            // 1. If this specific slot is already playing -> Stop it (Toggle behavior)
+            if (activeAudios.has(slotId)) {
+                const { audio } = activeAudios.get(slotId);
+                audio.pause();
+                audio.currentTime = 0; // Reset
+                activeAudios.delete(slotId);
+                element.classList.remove('playing');
+                return;
+            }
+
+            // 2. If Exclusive Mode is ON -> Stop all other active sounds
+            if (isExclusiveMode) {
+                stopAllAudios();
+            }
+
+            // 3. Start new audio
+            try {
+                const audio = new Audio(slot.mp3);
+                activeAudios.set(slotId, { audio, element });
+                
+                element.classList.add('playing');
+                
+                audio.play().catch(e => {
+                    console.error('Playback failed', e);
+                    activeAudios.delete(slotId);
+                    element.classList.remove('playing');
+                    alert('ไม่สามารถเล่นเสียงได้ ลิงก์อาจหมดอายุ');
+                });
+                
+                audio.onended = () => {
+                    if (activeAudios.get(slotId)?.audio === audio) {
+                        activeAudios.delete(slotId);
+                        element.classList.remove('playing');
+                    }
+                };
+            } catch (err) {
+                console.error('Audio initialization failed', err);
+            }
         }
 
         function openEditModal(slot) {
