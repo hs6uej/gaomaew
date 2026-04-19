@@ -7,14 +7,14 @@ const API_URL = ''; // Relative to origin
 
 // Sound effect URLs (Public domain/Direct links)
 const MEOW_SOUND = "https://www.myinstants.com/media/sounds/cat-meow.mp3";
-const HISS_SOUND = "https://www.myinstants.com/media/sounds/hiss.mp3";
-const PURR_SOUND = "https://www.myinstants.com/media/sounds/purr.mp3";
+const HISS_SOUND = "https://www.myinstants.com/media/sounds/nononono-cat-mp3cut.mp3";
+const PURR_SOUND = "https://www.myinstants.com/media/sounds/cat-purr.mp3";
 
 const HairParticle = ({ id, x, y, onComplete }) => {
   return (
     <motion.div
       initial={{ x, y, opacity: 1, rotate: 0 }}
-      animate={{ 
+      animate={{
         y: y + 200 + Math.random() * 100,
         x: x + (Math.random() - 0.5) * 100,
         opacity: 0,
@@ -47,12 +47,12 @@ function App() {
   const [isDragging, setIsDragging] = useState(false);
   const [isScratched, setIsScratched] = useState(false);
   const [particles, setParticles] = useState([]);
-  
+
   const lastPos = useRef({ x: 0, y: 0 });
   const totalDist = useRef(0);
   const scoreRef = useRef(0);
   const alertStartTime = useRef(0);
-  
+
   const gameLoopRef = useRef(null);
   const audioMeow = useRef(new Audio(MEOW_SOUND));
   const audioHiss = useRef(new Audio(HISS_SOUND));
@@ -122,7 +122,7 @@ function App() {
 
   const handlePointerDown = (e) => {
     if (gameState !== 'PLAYING') return;
-    
+
     // Check grace period on initial click too
     if (isAlerted && (Date.now() - alertStartTime.current > 150)) {
       endGame();
@@ -165,7 +165,7 @@ function App() {
     const dx = e.clientX - lastPos.current.x;
     const dy = e.clientY - lastPos.current.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    
+
     totalDist.current += dist;
     lastPos.current = { x: e.clientX, y: e.clientY };
 
@@ -176,7 +176,7 @@ function App() {
       totalDist.current = 0;
       setIsScratched(true);
       setTimeout(() => setIsScratched(false), 50);
-      
+
       if (score % 5 === 0) {
         audioPurr.current.currentTime = 0;
         audioPurr.current.play().catch(e => console.log("Audio blocked"));
@@ -212,7 +212,7 @@ function App() {
   return (
     <div className="container">
       <header>
-        <motion.h1 
+        <motion.h1
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
         >
@@ -230,7 +230,7 @@ function App() {
       <main className="game-area">
         <AnimatePresence mode="wait">
           {gameState === 'IDLE' && (
-            <motion.div 
+            <motion.div
               className="glass welcome-screen"
               key="idle"
               initial={{ scale: 0.9, opacity: 0 }}
@@ -249,7 +249,7 @@ function App() {
           )}
 
           {gameState === 'PLAYING' && (
-            <motion.div 
+            <motion.div
               className="cat-container"
               key="playing"
               onPointerDown={handlePointerDown}
@@ -259,21 +259,21 @@ function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
-              <motion.div 
+              <motion.div
                 className="cat-sprite"
-                animate={{ 
+                animate={{
                   scale: isScratched ? 1.05 : 1,
-                  rotate: isScratched ? [0, -2, 2, 0] : 0 
+                  rotate: isScratched ? [0, -2, 2, 0] : 0
                 }}
                 transition={{ duration: 0.1 }}
               >
-                <img 
-                  src={isAlerted ? "/cat_alert.png" : "/cat_behind.png"} 
-                  alt="Cat" 
+                <img
+                  src={isAlerted ? "/cat_alert.png" : "/cat_behind.png"}
+                  alt="Cat"
                   className="cat-img"
                 />
                 {isAlerted && (
-                  <motion.div 
+                  <motion.div
                     className="alert-cloud"
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -287,7 +287,7 @@ function App() {
           )}
 
           {gameState === 'GAME_OVER' && (
-            <motion.div 
+            <motion.div
               className="glass gameover-screen"
               key="gameover"
               initial={{ y: 50, opacity: 0 }}
@@ -297,9 +297,9 @@ function App() {
               <div className="final-score">คุณหวีขนไปได้ {score} ครั้ง</div>
               <div className="name-input">
                 <User size={20} />
-                <input 
-                  type="text" 
-                  placeholder="ใส่ชื่อของคุณ..." 
+                <input
+                  type="text"
+                  placeholder="ใส่ชื่อของคุณ..."
                   value={playerName}
                   onChange={(e) => setPlayerName(e.target.value)}
                 />
@@ -316,13 +316,13 @@ function App() {
       </main>
 
       {showLeaderboard && (
-        <motion.div 
+        <motion.div
           className="leaderboard-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           onClick={() => setShowLeaderboard(false)}
         >
-          <motion.div 
+          <motion.div
             className="glass leaderboard"
             onClick={e => e.stopPropagation()}
             layoutId="leaderboard"
@@ -346,7 +346,7 @@ function App() {
       )}
 
       <footer>
-        <p>Created with Love by Antigravity 🐱</p>
+        <p>Created with Love by Macssality 🐱</p>
       </footer>
     </div>
   );
