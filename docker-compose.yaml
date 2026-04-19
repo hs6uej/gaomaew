@@ -6,3 +6,11 @@ services:
     volumes:
       - ./data:/app/data
     restart: always
+
+  audio-tool:
+    build: ./tool-audio
+    ports:
+      - "4456:4456"
+    volumes:
+      - ./tool-audio/history.json:/app/history.json
+    restart: always

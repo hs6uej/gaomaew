@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Finder Tool 🐾</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #805ad5;
+            --primary-hover: #9f7aea;
+            --bg: #1a202c;
+            --glass: rgba(255, 255, 255, 0.05);
+            --text: #f7fafc;
+            --text-dim: #a0aec0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            background-image: radial-gradient(circle at 20% 20%, rgba(128, 90, 213, 0.15) 0%, transparent 40%),
+                              radial-gradient(circle at 80% 80%, rgba(66, 153, 225, 0.1) 0%, transparent 40%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #b794f4, #63b3ed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .glass {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .search-area {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0 2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(128, 90, 213, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-card {
+            display: none;
+            margin-top: 1.5rem;
+            border-left: 4px solid #48bb78;
+            background: rgba(72, 187, 120, 0.1);
+        }
+
+        .url-display {
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            word-break: break-all;
+            font-size: 0.9rem;
+        }
+
+        .history-section {
+            margin-top: 4rem;
+        }
+
+        .history-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-dim);
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.2s;
+        }
+
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .history-info {
+            flex: 1;
+            margin-right: 1rem;
+        }
+
+        .history-url {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .mini-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: #f56565;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Audio Finder</h1>
+            <p style="color: var(--text-dim)">สกัดลิงก์ MP3 จาก MyInstants ได้ง่ายๆ</p>
+        </header>
+
+        <section class="glass">
+            <div class="search-area">
+                <input type="text" id="urlInput" placeholder="ใส่ลิงก์ MyInstants ที่นี่..." autocomplete="off">
+                <button id="findBtn">
+                    <div class="loader" id="loader"></div>
+                    Find
+                </button>
+            </div>
+            
+            <div id="errorBox" class="error"></div>
+
+            <div id="resultCard" class="result-card glass">
+                <h3 style="color: #48bb78">พบลิงก์แล้ว!</h3>
+                <div class="url-display" id="mp3Result"></div>
+                <div class="actions">
+                    <button class="mini-btn" id="copyBtn">คัดลอกลิงก์</button>
+                    <button class="mini-btn" id="testBtn" style="background: #2d3748">ทดลองฟัง</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="history-section">
+            <h2>ประวัติการใช้งาน</h2>
+            <div id="historyList" class="glass" style="padding: 0">
+                <!-- History items will be injected here -->
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const urlInput = document.getElementById('urlInput');
+        const findBtn = document.getElementById('findBtn');
+        const loader = document.getElementById('loader');
+        const resultCard = document.getElementById('resultCard');
+        const mp3Result = document.getElementById('mp3Result');
+        const errorBox = document.getElementById('errorBox');
+        const historyList = document.getElementById('historyList');
+
+        async function loadHistory() {
+            try {
+                const res = await fetch('/api/history');
+                const history = await res.json();
+                renderHistory(history);
+            } catch (e) {
+                console.error('Failed to load history');
+            }
+        }
+
+        function renderHistory(history) {
+            if (!history.length) {
+                historyList.innerHTML = '<p style="padding: 2rem; color: var(--text-dim); text-align: center">ยังไม่มีประวัติ</p>';
+                return;
+            }
+            historyList.innerHTML = history.map(item => `
+                <div class="history-item">
+                    <div class="history-info">
+                        <div style="font-weight: 600; color: #b794f4; word-break: break-all;">${item.mp3.split('/').pop()}</div>
+                        <div class="history-url">${item.url}</div>
+                    </div>
+                    <div class="actions">
+                        <button class="mini-btn" onclick="copyToClipboard('${item.mp3}')">Copy</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        findBtn.addEventListener('click', async () => {
+            const url = urlInput.value.trim();
+            if (!url) return;
+
+            // Reset UI
+            errorBox.style.display = 'none';
+            resultCard.style.display = 'none';
+            findBtn.disabled = true;
+            loader.style.display = 'block';
+
+            try {
+                const res = await fetch('/api/find', {
+                    method: 'POST',
+                    body: JSON.stringify({ url }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await res.json();
+                
+                if (data.error) throw new Error(data.error);
+
+                mp3Result.textContent = data.mp3;
+                resultCard.style.display = 'block';
+                loadHistory(); // Refresh history
+            } catch (e) {
+                errorBox.textContent = e.message;
+                errorBox.style.display = 'block';
+            } finally {
+                findBtn.disabled = false;
+                loader.style.display = 'none';
+            }
+        });
+
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            copyToClipboard(mp3Result.textContent);
+        });
+
+        document.getElementById('testBtn').addEventListener('click', () => {
+            const audio = new Audio(mp3Result.textContent);
+            audio.play().catch(() => alert('ไม่สามารถเล่นได้ในบราวเซอร์นี้'));
+        });
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            alert('คัดลอกแล้ว!');
+        }
+
+        urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') findBtn.click();
+        });
+
+        // Initial load
+        loadHistory();
+    </script>
+</body>
+</html>
