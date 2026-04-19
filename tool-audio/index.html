@@ -257,11 +257,13 @@
             historyList.innerHTML = history.map(item => `
                 <div class="history-item">
                     <div class="history-info">
-                        <div style="font-weight: 600; color: #b794f4; word-break: break-all;">${item.mp3.split('/').pop()}</div>
-                        <div class="history-url">${item.url}</div>
+                        <div style="font-weight: 600; color: #b794f4; word-break: break-all; margin-bottom: 4px;">MP3: ${item.mp3}</div>
+                        <div class="history-url">Source: ${item.url}</div>
                     </div>
                     <div class="actions">
                         <button class="mini-btn" onclick="copyToClipboard('${item.mp3}')">Copy</button>
+                        <button class="mini-btn" style="background: #2d3748" onclick="testAudio('${item.mp3}')">Play</button>
+                        <button class="mini-btn" style="background: #c53030" onclick="deleteHistoryItem('${item.timestamp}')">Delete</button>
                     </div>
                 </div>
             `).join('');
@@ -305,9 +307,30 @@
         });
 
         document.getElementById('testBtn').addEventListener('click', () => {
-            const audio = new Audio(mp3Result.textContent);
-            audio.play().catch(() => alert('ไม่สามารถเล่นได้ในบราวเซอร์นี้'));
+            testAudio(mp3Result.textContent);
         });
+
+        function testAudio(url) {
+            const audio = new Audio(url);
+            audio.play().catch(() => alert('ไม่สามารถเล่นได้ในบราวเซอร์นี้ หรือลิงก์อาจหมดอายุ'));
+        }
+
+        async function deleteHistoryItem(timestamp) {
+            if (!confirm('ยืนยันการลบรายการนี้?')) return;
+            try {
+                const res = await fetch(`/api/history?timestamp=${timestamp}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadHistory();
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (e) {
+                alert('ลบไม่สำเร็จ: ' + e.message);
+            }
+        }
 
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text);

@@ -44,6 +44,37 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
+    // Delete Item API
+    if (req.method === 'DELETE' && parsedUrl.pathname === '/api/history') {
+        const ts = parsedUrl.searchParams.get('timestamp');
+        if (!ts) {
+            res.writeHead(400);
+            res.end(JSON.stringify({ error: 'Timestamp is required' }));
+            return;
+        }
+
+        try {
+            const data = fs.readFileSync(HISTORY_FILE, 'utf8');
+            let history = JSON.parse(data || '[]');
+            const initialLength = history.length;
+            history = history.filter(item => item.timestamp !== ts);
+            
+            if (history.length === initialLength) {
+                res.writeHead(404);
+                res.end(JSON.stringify({ error: 'Item not found' }));
+                return;
+            }
+
+            fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2));
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true }));
+        } catch (err) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+    }
+
     // Find MP3 API
     if (req.method === 'POST' && parsedUrl.pathname === '/api/find') {
         let body = '';
