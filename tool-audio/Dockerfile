@@ -2,9 +2,8 @@ FROM node:22-slim
 
 WORKDIR /app
 
-# No dependencies means no package.json needed for npm install
-# But we copy server.js, index.html, and a skeleton history.json
-COPY server.js index.html history.json ./
+# Copy server, UI files and initial data
+COPY server.js index.html pad.html history.json pad.json ./
 
 EXPOSE 4456
 
