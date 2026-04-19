@@ -333,8 +333,44 @@
         }
 
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text);
-            alert('คัดลอกแล้ว!');
+            if (navigator.clipboard && window.isSecureContext) {
+                // Use the Clipboard API if available and in a secure context
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('คัดลอกแล้ว! (Clipboard API)');
+                }).catch(err => {
+                    console.error('Failed to copy using Clipboard API: ', err);
+                    fallbackCopyTextToClipboard(text);
+                });
+            } else {
+                // Use the fallback method for non-secure contexts or when Clipboard API is unavailable
+                fallbackCopyTextToClipboard(text);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // Ensure the textarea is not visible but still part of the DOM
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                const msg = successful ? 'คัดลอกแล้ว!' : 'คัดลอกไม่สำเร็จ';
+                alert(msg);
+            } catch (err) {
+                console.error('Fallback copy failed: ', err);
+                alert('ไม่สามารถคัดลอกได้ โปรดลองคัดลอกด้วยตนเอง');
+            }
+
+            document.body.removeChild(textArea);
         }
 
         urlInput.addEventListener('keypress', (e) => {
